@@ -29,21 +29,21 @@ const nextConfig = {
         zlib: false,
         path: false,
         os: false,
+        // Add globalThis fallback
+        globalThis: require.resolve("globalthis/polyfill"),
       };
 
-      // Define global polyfills
+      // Provide global and process polyfills
       config.plugins.push(
         new webpack.ProvidePlugin({
-          global: ["globalThis"],
           process: "process/browser",
         })
       );
 
-      // Define fetch globally at the webpack level
+      // Define globalThis polyfill
       config.plugins.push(
         new webpack.DefinePlugin({
-          "global.fetch": "fetch",
-          "globalThis.fetch": "fetch",
+          "global": "globalThis",
         })
       );
 
