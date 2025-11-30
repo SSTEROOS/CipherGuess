@@ -1,210 +1,228 @@
-# CipherGuess - FHE Number Guessing Game
+# CipherGuess - FHE Number Comparison Game
 
-A fully homomorphic encryption (FHE) powered number guessing game built on Ethereum Sepolia using Zama's FHEVM.
+A fully homomorphic encryption (FHE) powered number comparison game built on Ethereum Sepolia using Zama's FHEVM.
 
-## Overview
+## 🎯 Overview
 
-CipherGuess demonstrates the power of Fully Homomorphic Encryption in blockchain applications. Players guess a secret number, but here's the twist: **all guesses and the secret number remain encrypted throughout the entire process**. The blockchain performs comparisons on encrypted data, and only the player can decrypt their results.
+CipherGuess demonstrates **real FHE (Fully Homomorphic Encryption)** in blockchain applications. Both user input and system-generated random numbers are encrypted client-side, compared on-chain using FHE operations, and only the authorized user can decrypt the result.
 
-### Why FHE?
+### Why FHE Matters
 
-Traditional blockchain games expose all data on-chain. With FHE:
-- The secret number is never revealed on-chain
-- Player guesses remain private
-- Comparisons happen on encrypted data
-- Only authorized parties can decrypt results
+Traditional blockchain applications expose all data on-chain. With FHE:
+- ✅ **Numbers stay encrypted** - Never revealed on-chain
+- ✅ **Computation on ciphertext** - Smart contract compares encrypted values
+- ✅ **User-controlled decryption** - Only you can decrypt your results (via wallet signature)
+- ✅ **Zero trust required** - No central authority sees plaintext data
 
-This creates a truly fair and private gaming experience that was previously impossible on public blockchains.
+This enables a new paradigm of **privacy-preserving blockchain applications** that was previously impossible.
 
-## Features
+## 🔐 FHE Flow
 
-- **Encrypted Game Creation**: Hosts set a secret number that's encrypted before hitting the blockchain
-- **Private Guessing**: Player guesses are encrypted client-side using FHE
-- **On-Chain FHE Computation**: Smart contract compares encrypted guess vs encrypted secret
-- **Secure Result Decryption**: Only players can decrypt their comparison results
-- **Beautiful UI**: Modern, responsive interface with RainbowKit wallet integration
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        CIPHERGUESS FLOW                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1️⃣ ENCRYPT (Client-Side)                                       │
+│     ┌──────────────┐    ┌──────────────┐                        │
+│     │ System: 42   │    │ User: 30     │                        │
+│     └──────┬───────┘    └──────┬───────┘                        │
+│            │ FHE.encrypt()     │ FHE.encrypt()                  │
+│            ▼                   ▼                                │
+│     ┌──────────────┐    ┌──────────────┐                        │
+│     │ 0x7a8b...    │    │ 0x3f2c...    │                        │
+│     └──────┬───────┘    └──────┬───────┘                        │
+│            │                   │                                │
+│  2️⃣ COMPUTE (On-Chain FHE)     │                                │
+│            └─────────┬─────────┘                                │
+│                      ▼                                          │
+│     ┌────────────────────────────────┐                          │
+│     │  Smart Contract:               │                          │
+│     │  FHE.eq(cipher1, cipher2)      │                          │
+│     │  FHE.gt(cipher1, cipher2)      │                          │
+│     │  FHE.select(...)               │                          │
+│     └────────────────┬───────────────┘                          │
+│                      ▼                                          │
+│     ┌──────────────────────────────┐                            │
+│     │ Encrypted Result: 0x9d4e...  │                            │
+│     └──────────────┬───────────────┘                            │
+│                    │                                            │
+│  3️⃣ DECRYPT (User Signature Required)                           │
+│                    ▼                                            │
+│     ┌──────────────────────────────┐                            │
+│     │ 🦊 Wallet Sign EIP-712       │                            │
+│     │    (Authorize Decryption)    │                            │
+│     └──────────────┬───────────────┘                            │
+│                    ▼                                            │
+│     ┌──────────────────────────────┐                            │
+│     │ Result: 0 (Lower) / 1 (Equal)│                            │
+│     │         / 2 (Higher)         │                            │
+│     └──────────────────────────────┘                            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
-## Technology Stack
+## ✨ Features
+
+- **Real FHE Encryption** - Uses `@zama-fhe/relayer-sdk` for client-side encryption
+- **On-Chain FHE Computation** - `FHE.eq()`, `FHE.gt()`, `FHE.select()` operations
+- **User-Controlled Decryption** - `userDecrypt` with EIP-712 wallet signature
+- **Modern UI** - Beautiful interface with animated backgrounds and step indicators
+- **Wallet Integration** - RainbowKit + wagmi for seamless wallet connection
+
+## 🛠 Technology Stack
 
 | Layer | Technology |
 |-------|------------|
-| Smart Contracts | Solidity 0.8.24, FHEVM |
-| FHE Operations | Zama FHEVM Library |
+| Smart Contract | Solidity 0.8.24, FHEVM v0.9 |
+| FHE Library | `@fhevm/solidity`, `@zama-fhe/relayer-sdk` |
 | Frontend | Next.js 14, React 18, TypeScript |
-| Wallet | RainbowKit, wagmi |
+| Wallet | RainbowKit 2.x, wagmi 2.x |
 | Styling | Tailwind CSS |
 | Network | Ethereum Sepolia Testnet |
 
-## FHE Flow
+## 📁 Project Structure
 
 ```
-1. CREATE GAME
-   Host picks secret (e.g., 50)
-   ↓
-   Frontend encrypts: encrypt(50) → 0x7a8b...
-   ↓
-   Store encrypted secret on-chain
-
-2. MAKE GUESS
-   Player guesses (e.g., 30)
-   ↓
-   Frontend encrypts: encrypt(30) → 0x3f2c...
-   ↓
-   Contract compares: FHE.eq(encrypted_30, encrypted_50)
-   ↓
-   Returns encrypted result (0=low, 1=correct, 2=high)
-
-3. VIEW RESULT
-   Player requests decryption
-   ↓
-   Only player with permission can decrypt
-   ↓
-   Display: "Too Low!" / "Too High!" / "Correct!"
-```
-
-## Project Structure
-
-```
-zama_11/
-├── contracts/                 # Hardhat project
+CipherGuess/
+├── contracts/                      # Hardhat project
 │   ├── contracts/
-│   │   └── GuessNumber.sol   # FHE game contract
+│   │   ├── NumberCompare.sol      # Main FHE comparison contract
+│   │   └── GuessNumber.sol        # Legacy guessing game contract
 │   ├── scripts/
-│   │   └── deploy.ts         # Deployment script
+│   │   └── deployNumberCompare.ts # Deployment script
 │   ├── test/
-│   │   └── GuessNumber.test.ts # Unit tests
+│   │   ├── NumberCompare.test.ts  # Unit tests for NumberCompare
+│   │   └── GuessNumber.test.ts    # Unit tests for GuessNumber
 │   └── hardhat.config.ts
-├── frontend/                  # Next.js application
-│   ├── app/                   # App router pages
-│   ├── components/            # React components
-│   ├── lib/                   # Utilities & hooks
-│   └── package.json
+├── frontend/                       # Next.js application
+│   ├── app/                        # App router pages
+│   ├── components/
+│   │   └── SimpleGame.tsx         # Main game component
+│   └── lib/
+│       ├── fhevm-context.tsx      # FHE SDK integration
+│       └── contract.ts            # Contract ABI & address
 └── README.md
 ```
 
-## Smart Contract
+## 📜 Smart Contract
 
-The `GuessNumber` contract implements:
+### NumberCompare.sol
 
-- `createGame()` - Create a game with an encrypted secret number
-- `makeGuess()` - Submit an encrypted guess and get encrypted result
-- `claimWin()` - Claim victory after guessing correctly
-- `endGame()` - Host can end a game
+The main contract that performs FHE number comparison:
 
-Key FHE operations used:
-- `FHE.fromExternal()` - Validate and import encrypted inputs
-- `FHE.eq()` - Encrypted equality comparison
-- `FHE.gt()` - Encrypted greater-than comparison
-- `FHE.select()` - Encrypted conditional selection
-- `FHE.allow()` - Grant decryption permissions
+```solidity
+// Core FHE operations used
+FHE.fromExternal()  // Validate & import encrypted inputs
+FHE.eq()            // Encrypted equality comparison
+FHE.gt()            // Encrypted greater-than comparison
+FHE.select()        // Encrypted conditional selection
+FHE.allow()         // Grant decryption permission to user
+```
 
-## Getting Started
+**Key Functions:**
+- `compareNumbers(encryptedSystem, encryptedUser, proofs)` - Compare two encrypted numbers
+- `getResult(compareId)` - Get encrypted result handle for decryption
+
+## 🚀 Deployed Contract
+
+| Network | Contract | Address | Verified |
+|---------|----------|---------|----------|
+| Sepolia | NumberCompare | [`0x88432C3D631Ea1ce18eA8C16988279E40b973080`](https://sepolia.etherscan.io/address/0x88432C3D631Ea1ce18eA8C16988279E40b973080#code) | ✅ Yes |
+
+## 🏃 Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- pnpm (recommended) or npm
-- MetaMask or compatible wallet
-- Sepolia testnet ETH
+- pnpm or npm
+- MetaMask wallet
+- Sepolia testnet ETH ([Faucet](https://sepoliafaucet.com/))
 
 ### Installation
 
-1. Clone the repository:
 ```bash
-git clone <repo-url>
-cd zama_11
-```
+# Clone the repository
+git clone https://github.com/SSTEROOS/CipherGuess.git
+cd CipherGuess
 
-2. Install contract dependencies:
-```bash
+# Install contract dependencies
 cd contracts
-pnpm install
-```
+npm install
 
-3. Install frontend dependencies:
-```bash
+# Install frontend dependencies
 cd ../frontend
-pnpm install
+npm install
 ```
 
-### Configuration
-
-1. Create `contracts/.env`:
-```env
-SEPOLIA_RPC_URL=your_sepolia_rpc_url
-PRIVATE_KEY=your_private_key
-ETHERSCAN_API_KEY=your_etherscan_api_key
-```
-
-2. Deploy the contract:
-```bash
-cd contracts
-pnpm run deploy
-```
-
-3. Verify on Etherscan:
-```bash
-npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
-```
-
-4. Update the contract address in `frontend/lib/contract.ts`
-
-### Running the Frontend
+### Run Frontend
 
 ```bash
 cd frontend
-pnpm dev
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-## Testing
-
-Run the smart contract tests:
+### Deploy Contract (Optional)
 
 ```bash
 cd contracts
-pnpm test
+
+# Create .env file
+echo "SEPOLIA_RPC_URL=your_rpc_url" >> .env
+echo "PRIVATE_KEY=your_private_key" >> .env
+echo "ETHERSCAN_API_KEY=your_api_key" >> .env
+
+# Deploy
+npx hardhat run scripts/deployNumberCompare.ts --network sepolia
+
+# Verify
+npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
+```
+
+## 🧪 Testing
+
+```bash
+cd contracts
+npm test
 ```
 
 The test suite covers:
-- Contract deployment
-- Game creation with encrypted secrets
-- Making encrypted guesses
-- FHE comparison results (too low, too high, correct)
-- Game management (ending, claiming wins)
-- Multiple player scenarios
+- Contract deployment and initialization
+- Result constants (LOWER, EQUAL, HIGHER)
+- Contract interface validation
+- State variable accessibility
+- View function behavior
 
-## Deployed Contract
+## 💼 Business Potential
 
-| Network | Address | Verified |
-|---------|---------|----------|
-| Sepolia | [`0x98b3Aab6Af3e0f59b59802396eaADF263ACCDD53`](https://sepolia.etherscan.io/address/0x98b3Aab6Af3e0f59b59802396eaADF263ACCDD53#code) | Yes |
+CipherGuess demonstrates a paradigm shift for blockchain applications:
 
-## Business Potential
+| Use Case | Traditional | With FHE |
+|----------|-------------|----------|
+| **Gaming** | All bets/cards visible | Encrypted gameplay |
+| **Auctions** | Bids visible to all | Sealed-bid auctions |
+| **Voting** | Votes can be traced | Truly secret ballots |
+| **Finance** | Amounts exposed | Private transactions |
 
-CipherGuess demonstrates a new paradigm for blockchain gaming:
+### Future Roadmap
 
-1. **Fair Gaming**: Impossible to cheat by reading on-chain data
-2. **Privacy-Preserving**: Player behavior remains confidential
-3. **Trustless**: No central authority knows the secrets
-4. **Extensible**: Pattern applies to poker, auctions, voting, etc.
+- 🎮 **Tournament Mode** - Multi-player competitions with prize pools
+- 🏆 **NFT Achievements** - Mint badges for milestones
+- 📊 **Analytics Dashboard** - Track stats while preserving privacy
+- 🌐 **Multi-chain** - Deploy on other FHE-enabled networks
 
-### Future Possibilities
-
-- **Tournament Mode**: Multiple games with prize pools
-- **NFT Rewards**: Mint achievement NFTs for winners
-- **Leaderboards**: Track best players while preserving game privacy
-- **Mobile App**: Native mobile experience
-- **Multi-chain**: Deploy on other EVM chains supporting FHEVM
-
-## License
+## 📄 License
 
 MIT
 
-## Acknowledgments
+## 🙏 Acknowledgments
 
 - [Zama](https://zama.ai) - FHEVM and FHE libraries
 - [RainbowKit](https://rainbowkit.com) - Wallet connection
 - [wagmi](https://wagmi.sh) - React hooks for Ethereum
 
+---
+
+**Built for the [Zama Developer Program](https://guild.xyz/zama/developer-program)** 🔐
