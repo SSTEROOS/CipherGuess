@@ -1,0 +1,45 @@
+# Sensitive files - never commit
+note.txt
+note
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+contracts/.env
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+.next/
+out/
+
+# Cache
+.cache/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Hardhat
+cache/
+artifacts/
+typechain-types/
+contracts/cache/
+contracts/artifacts/
+contracts/typechain-types/
+
+# Test coverage
+coverage/
+coverage.json
+
