@@ -54,8 +54,6 @@ export function SimpleGame() {
         const { data: latestCounter } = await refetchCounter();
         const compareId = latestCounter ? Number(latestCounter) - 1 : 0;
         
-        console.log("Getting result for compareId:", compareId);
-        
         // Read the encrypted result handle from contract
         const resultHandle = await publicClient.readContract({
           address: NUMBER_COMPARE_ADDRESS as `0x${string}`,
@@ -63,8 +61,6 @@ export function SimpleGame() {
           functionName: "getResult",
           args: [BigInt(compareId)],
         });
-        
-        console.log("Result handle from contract:", resultHandle);
         
         if (!resultHandle) {
           throw new Error("Failed to get encrypted result");
@@ -74,42 +70,28 @@ export function SimpleGame() {
         const handleHex = typeof resultHandle === 'bigint' 
           ? `0x${resultHandle.toString(16).padStart(64, '0')}`
           : String(resultHandle);
-        
-        console.log("Handle hex:", handleHex);
 
-        // Generate keypair for decryption
-        console.log("Generating keypair...");
         const keypair = instance.generateKeypair();
-        console.log("Keypair generated");
 
-        // Create EIP-712 signature request for user decryption
         const startTimestamp = Math.floor(Date.now() / 1000);
         const durationDays = 1;
         
-        console.log("Creating EIP-712 signature request...");
         const eip712 = instance.createEIP712(
           keypair.publicKey,
           [NUMBER_COMPARE_ADDRESS],
           startTimestamp,
           durationDays
         );
-        console.log("EIP-712 data:", eip712);
 
-        // Request user signature - THIS WILL POP UP WALLET!
-        console.log("Requesting wallet signature for decryption...");
         const signature = await walletClient.signTypedData({
           domain: eip712.domain,
           types: eip712.types,
           primaryType: eip712.primaryType,
           message: eip712.message,
         });
-        console.log("Signature obtained:", signature.slice(0, 20) + "...");
 
-        // Step 5: Decrypt with user signature
         setCurrentStep("decrypting");
 
-        // Call userDecrypt with the signature
-        console.log("Calling userDecrypt...");
         const decryptedResults = await instance.userDecrypt(
           [{ handle: handleHex, contractAddress: NUMBER_COMPARE_ADDRESS }],
           keypair.privateKey,
@@ -121,11 +103,7 @@ export function SimpleGame() {
           durationDays
         );
         
-        console.log("Decrypted results:", decryptedResults);
-        
-        // Get the result value
         const resultValue = Object.values(decryptedResults)[0];
-        console.log("FHE Decrypted result:", resultValue);
         
         let resultStr: "lower" | "equal" | "higher";
         if (Number(resultValue) === RESULT_LOWER) {
@@ -152,7 +130,6 @@ export function SimpleGame() {
         setTimeout(() => setCurrentStep("idle"), 2000);
         
       } catch (err: any) {
-        console.error("Decryption failed:", err);
         setTxError(err.message || "Decryption failed");
         setCurrentStep("idle");
       }
@@ -175,12 +152,9 @@ export function SimpleGame() {
       setTxError(null);
       setPendingUserNumber(userNum);
       
-      // Step 1: Generate system random number
       const sysNum = Math.floor(Math.random() * 100) + 1;
       setSystemNumber(sysNum);
-      console.log(`System random: ${sysNum}, User number: ${userNum}`);
 
-      // Step 2: Encrypt both numbers
       setCurrentStep("encrypting");
       
       const [encryptedSystem, encryptedUser] = await Promise.all([
@@ -191,12 +165,7 @@ export function SimpleGame() {
       if (!encryptedSystem || !encryptedUser) {
         throw new Error("Encryption failed");
       }
-      
-      console.log("Both numbers FHE encrypted");
-      console.log("System ciphertext:", toHex(encryptedSystem.handle).slice(0, 20) + "...");
-      console.log("User ciphertext:", toHex(encryptedUser.handle).slice(0, 20) + "...");
 
-      // Step 3: Submit to contract (wallet signature for transaction)
       setCurrentStep("signing");
       
       await writeContractAsync({
@@ -214,7 +183,6 @@ export function SimpleGame() {
       setCurrentStep("confirming");
       
     } catch (err: any) {
-      console.error("Comparison failed:", err);
       setTxError(err.message || "Operation failed");
       setCurrentStep("idle");
       setSystemNumber(null);

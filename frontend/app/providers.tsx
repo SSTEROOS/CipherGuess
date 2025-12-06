@@ -16,7 +16,7 @@ const config = getDefaultConfig({
   projectId,
   chains: [sepolia],
   transports: {
-    [sepolia.id]: http("https://eth-sepolia.g.alchemy.com/v2/xeMfJRSGpIGq5WiFz-bEiHoG6DGrZnAr"),
+    [sepolia.id]: http("https://eth-sepolia.g.alchemy.com/v2/6THjIdSVGHMxJVQ6ocOdK"),
   },
   ssr: true,
 });
